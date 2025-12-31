@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from datetime import datetime
+from . import storage
+
 
 app = FastAPI(title="Aurum_Solace Server")
+
+@app.on_event("startup")
+def on_startup():
+    storage.init_db()
 
 # -------------------------
 # Data model for mood input
@@ -15,15 +21,11 @@ class MoodCheckIn(BaseModel):
 
 
 
-# temporary storage (later we will use a database)
-MOOD_LOGS = []
-
-
 class ActionLog(BaseModel):
     action: str
     success: bool = True
 
-ACTION_LOGS = []
+
 
 
 
@@ -63,14 +65,11 @@ def ping():
 # -------------------------
 @app.post("/checkin/mood", description="Mood check-in")
 def checkin_mood(data: MoodCheckIn):
-    entry = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "mood": data.mood,
-        "energy": data.energy,
-        "focus": data.focus, 
-    }
-
-    MOOD_LOGS.append(entry)
+    entry = storage.insert_mood(
+        mood=data.mood,
+        energy=data.energy,
+        focus=data.focus, 
+    )
 
     suggestion = suggest_action(data.mood, data.energy, data.focus)
 
@@ -82,13 +81,12 @@ def checkin_mood(data: MoodCheckIn):
 
 @app.post("/action/log")
 def log_action(data: ActionLog):
-    entry= { 
-        "timestamp": datetime.utcnow().isoformat(),
-        "action": data.action,
-        "success": data.success
-    }
+    #Save to data base (storage.py)
+    entry = storage.insert_action( 
+        action=data.action,
+        success=data.success
+    )
 
-    ACTION_LOGS.append(entry)
 
     return {
         "status": "stored",
@@ -97,7 +95,4 @@ def log_action(data: ActionLog):
 
 @app.get("/summary", description="Summary of Logs")
 def summary():
-    return {
-        "mood_entries": len(MOOD_LOGS),
-        "action_entries": len(ACTION_LOGS)
-    }
+    return storage.get_summary()
