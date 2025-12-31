@@ -103,3 +103,33 @@ def mood_history(limit: int = 20):
 @app.get("/history/actions", description="Recent action logs (newest first)")
 def action_history(limit: int = 20):
     return storage.get_action_history(limit=limit)
+
+@app.get("/coach", description="Get a suggested next step based on your latest mood check-in.")
+def coach():
+    # Get the most recent mood entry from the database
+    history = storage.get_mood_history(limit=1)
+
+    if not history:
+        # No mood data collected yet - return a gentle message
+        return {
+            "message": "No mood check-ins found yet. Do a quick check-in first so I can suggest something",
+            "suggestion": None
+        }
+    
+    last = history[0]
+
+    suggestion = suggest_action(
+        mood=last["mood"],
+        energy=last["energy"],
+        focus=last["focus"],
+    )
+
+    return {
+        "based_on": {
+            "timestamp": last["timestamp"],
+            "mood": last["mood"],
+            "energy": last["energy"],
+            "focus": last["focus"],
+        },
+        "suggestion": suggestion
+    }

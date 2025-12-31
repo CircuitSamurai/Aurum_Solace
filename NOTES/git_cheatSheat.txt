@@ -1,0 +1,110 @@
+# Deploy Notes - Aurum_Solace
+
+This document lists common commands and workflows used to update and deploy the Aurum backend. It assumes:
+
+* Development is done on your **laptop**
+* Deployment runs on the **mini PC**
+* GitHub is the source of truth
+* Python virtual environment (`venv`) is used for dependencies
+
+---
+
+## 🧠 Workflow Overview
+
+1. **Write code on laptop**
+2. **Commit & push** changes to GitHub
+3. **Pull & run** latest code on the mini PC
+
+---
+
+## 💻 Laptop: Commit & Push Changes
+
+Use these steps every time code is updated on your laptop.
+
+```bash
+git add .
+git commit -m "Describe what changed"
+git push
+```
+
+### Example commit messages
+
+```bash
+git commit -m "added /coach endpoint"
+git commit -m "implemented action streak tracking"
+git commit -m "sqlite storage and history endpoints"
+```
+
+---
+
+## 🖥️ Mini PC: Pull Latest & Run
+
+### 1️⃣ Navigate to project
+
+```bash
+cd %USERPROFILE%\Aurum_Solace
+```
+
+### 2️⃣ Activate virtual environment
+
+```bash
+venv\Scripts\activate
+```
+
+### 3️⃣ Pull latest code
+
+```bash
+git pull
+```
+
+### 4️⃣ Run server
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Test in browser:
+
+```
+http://127.0.0.1:8000/docs       # from mini PC itself
+http://<mini-pc-ip>:8000/docs    # from laptop on same network
+```
+
+---
+
+## 🔌 Start/Stop the Brain
+
+Stop running server:
+
+```
+CTRL + C
+```
+
+Restart later:
+
+```bash
+cd %USERPROFILE%\Aurum_Solace
+venv\Scripts\activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+---
+
+## 📝 Deployment Notes
+
+* Always **push from laptop** before pulling on mini PC
+* Ensure `(venv)` is active when installing or running code
+* If `git pull` fails due to conflicts, commit or stash laptop changes first
+* SQLite database file (`aurum.db`) lives on the mini PC and persists between runs
+
+---
+
+## 🧭 Next Steps to Automate Deployment
+
+* Auto-start server on boot (Windows service or Task Scheduler)
+* HTTPS + authentication for remote access
+* CI/CD or automated pull & restart script
+
+---
+
+**Last updated:** *replace with date when editing*
