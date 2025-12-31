@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from datetime import datetime
 from . import storage
 
 
@@ -96,3 +95,11 @@ def log_action(data: ActionLog):
 @app.get("/summary", description="Summary of Logs")
 def summary():
     return storage.get_summary()
+
+@app.get("/history/mood", description="Recent mood check-ins (newest first)")
+def mood_history(limit: int = 20):
+    return storage.get_mood_history(limit=limit)
+
+@app.get("/history/actions", description="Recent action logs (newest first)")
+def action_history(limit: int = 20):
+    return storage.get_action_history(limit=limit)
