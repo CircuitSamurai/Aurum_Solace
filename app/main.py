@@ -123,7 +123,7 @@ def coach():
         energy=last["energy"],
         focus=last["focus"],
     )
-
+    
     return {
         "based_on": {
             "timestamp": last["timestamp"],
