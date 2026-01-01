@@ -126,7 +126,7 @@ def get_mood_history(limit: int = 20) -> List[Dict[str, Any]]:
     )
 
     rows = cur.fetchall()
-    conn.clos()
+    conn.close()
 
     # Convert sqlite3.Row objects to plain dicts
     history = []
@@ -171,3 +171,78 @@ def get_action_history(limit: int = 20) -> List[Dict[str, Any]]:
         )
 
     return history
+
+def get_action_streak() -> Dict[str, Any]:
+    """
+    Calculate the current streak of days with at least one successful action.
+    Streak is counted backwards from today (UTC) as consecutive days.
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Get all successful actions ordered from newest to oldest
+    cur.execute(
+        """
+        SELECT timestamp
+        FROM action_logs
+        WHERE success = 1
+        ORDER BY timestamp DESC;
+        """
+    )
+
+    rows = cur.fetchall()
+    conn.close()
+
+    if not rows:
+        return {
+            "streak_days": 0,
+            "last_action_date": None,
+        }
+
+    # Collect unique dates (in UTC) where successful actions happened
+    unique_dates = []
+    seen = set()
+
+    for row in rows:
+        ts_str = row["timestamp"]
+        try:
+            dt = datetime.fromisoformat(ts_str)
+        except ValueError:
+            # If parsing fails for some reason, skip this row
+            continue
+
+        d = dt.date()
+        if d not in seen:
+            seen.add(d)
+            unique_dates.append(d)
+
+    if not unique_dates:
+        return {
+            "streak_days": 0,
+            "last_action_date": None,
+        }
+
+    # Sort dates from newest to oldest (should already be, but just in case)
+    unique_dates.sort(reverse=True)
+
+    today = date.today()
+    streak = 0
+    expected = today
+
+    for d in unique_dates:
+        if d == expected:
+            streak += 1
+            expected = expected - timedelta(days=1)
+        elif d > expected:
+            # Action logged in "future" relative to today (rare) - skip those
+            continue
+        else:
+            # There's a gap; streak ends
+            break
+
+    last_action_date = unique_dates[0].isoformat()
+
+    return {
+        "streak_days": streak,
+        "last_action_date": last_action_date,
+    }
