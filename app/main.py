@@ -27,6 +27,11 @@ class ActionLog(BaseModel):
 
 
 
+class MoodTextIn(BaseModel):
+    text: str # free-form text about how the user feels
+
+
+
 
 # -------------------------
 # suggestion logic
@@ -49,6 +54,49 @@ def suggest_action(mood: str, energy: str, focus: str) -> str:
         return "Great conditions today — move something meaningful forward with 20 minutes of deep focus."
 
     return "Start small — what is one simple action Future You would thank you for?"
+
+
+
+def infer_state_from_text(text: str):
+    """
+    Very simple rule-based classifier for now.
+    Later, this is where a real LLM or model call will live.
+    """
+    t = text.lower()
+
+    # Default values
+    mood = "neutral"
+    energy = "medium"
+    focus = "ok"
+    confidence = 0.4  # arbitrary baseline
+
+    # --- Mood keywords ---
+    if any(word in t for word in ["sad", "down", "depressed", "empty", "tired of", "overwhelmed"]):
+        mood = "low"
+        confidence = 0.7
+    elif any(word in t for word in ["good", "great", "excited", "happy", "pumped", "optimistic"]):
+        mood = "good"
+        confidence = 0.7
+
+    # --- Energy keywords ---
+    if any(word in t for word in ["exhausted", "drained", "tired", "low energy", "wiped"]):
+        energy = "low"
+    elif any(word in t for word in ["wired", "energized", "hyped", "ready to go", "full of energy"]):
+        energy = "high"
+
+    # --- Focus keywords ---
+    if any(word in t for word in ["scattered", "can't focus", "distracted", "all over the place"]):
+        focus = "drifting"
+    elif any(word in t for word in ["locked in", "dialed in", "focused", "in the zone"]):
+        focus = "locked-in"
+
+    return {
+        "mood": mood,
+        "energy": energy,
+        "focus": focus,
+        "confidence": confidence,
+    }
+
 
 
 # -------------------------
@@ -163,4 +211,17 @@ def coach():
         },
         "streak": streak_data,
         "suggestion": suggestion,
+    }
+
+
+@app.post("/infer/mood", description="Infer mood, energy, and focus from free-form text.")
+def infer_mood(data: MoodTextIn):
+    result = infer_state_from_text(data.text)
+
+    return {
+        "input_text": data.text,
+        "mood": result["mood"],
+        "energy": result["energy"],
+        "focus": result["focus"],
+        "confidence": result["confidence"],
     }
