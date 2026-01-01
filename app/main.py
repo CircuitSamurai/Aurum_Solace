@@ -96,6 +96,11 @@ def log_action(data: ActionLog):
 def summary():
     return storage.get_summary()
 
+@app.get("/streak/actions", description="Current action streak in days")
+def action_streak():
+    return storage.get_action_streak()
+
+
 @app.get("/history/mood", description="Recent mood check-ins (newest first)")
 def mood_history(limit: int = 20):
     return storage.get_mood_history(limit=limit)
