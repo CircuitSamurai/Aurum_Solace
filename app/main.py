@@ -117,24 +117,50 @@ def coach():
     if not history:
         # No mood data collected yet - return a gentle message
         return {
-            "message": "No mood check-ins found yet. Do a quick check-in first so I can suggest something",
-            "suggestion": None
+            "message": "No mood check-ins found yet. Do a quick check-in first so I can suggest something.",
+            "suggestion": None,
         }
-    
+
     last = history[0]
 
-    suggestion = suggest_action(
-        mood=last["mood"],
-        energy=last["energy"],
-        focus=last["focus"],
+    # Use correct keys from the DB rows
+    mood = last.get("mood", "neutral")
+    energy = last.get("energy", "medium")
+    focus = last.get("focus", "ok")
+
+    # 2) Base suggestion from mood
+    base_suggestion = suggest_action(
+        mood=mood,
+        energy=energy,
+        focus=focus,
     )
-    
+
+    # 3) Pull current streak
+    streak_info = getattr(storage, "get_action_streak", None)
+    if callable(streak_info):
+        streak_data = storage.get_action_streak()
+    else:
+        streak_data = {"streak_days": 0, "last_action_date": None}
+
+    streak_days = streak_data.get("streak_days", 0)
+
+    # 4) Add streak-aware nuance
+    if streak_days >= 3:
+        extra = f" You're on a {streak_days}-day streak. Protect it with one small action today."
+    elif streak_days == 1 or streak_days == 2:
+        extra = f" Good start — you're at {streak_days} day of action. Let's keep it going."
+    else:
+        extra = " Let's just focus on winning today with one meaningful action."
+
+    suggestion = f"{base_suggestion} {extra}"
+
     return {
         "based_on": {
-            "timestamp": last["timestamp"],
-            "mood": last["mood"],
-            "energy": last["energy"],
-            "focus": last["focus"],
+            "timestamp": last.get("timestamp"),
+            "mood": mood,
+            "energy": energy,
+            "focus": focus,
         },
-        "suggestion": suggestion
+        "streak": streak_data,
+        "suggestion": suggestion,
     }
