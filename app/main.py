@@ -225,3 +225,55 @@ def infer_mood(data: MoodTextIn):
         "focus": result["focus"],
         "confidence": result["confidence"],
     }
+
+
+@app.post("/checkin/text", description="Auto-checkin: infer mood/energy/focus from text, store it, and return coaching.")
+def checkin_text(data: MoodTextIn):
+    # 1) Infer state from text
+    inferred = infer_state_from_text(data.text)
+
+    mood = inferred["mood"]
+    energy = inferred["energy"]
+    focus = inferred["focus"]
+
+    # 2) Store in DB using your existing storage function
+    entry = storage.insert_mood(
+        mood=mood,
+        energy=energy,
+        focus=focus,
+    )
+
+    # 3) Generate coaching suggestion
+    base_suggestion = suggest_action(mood=mood, energy=energy, focus=focus)
+
+    # 4) (Optional) streak-aware add-on
+    streak_info = getattr(storage, "get_action_streak", None)
+    if callable(streak_info):
+        streak_data = storage.get_action_streak()
+    else:
+        streak_data = {"streak_days": 0, "last_action_date": None}
+
+    streak_days = streak_data.get("streak_days", 0)
+
+    if streak_days >= 3:
+        extra = f" You're on a {streak_days}-day streak. Protect it with one small action today."
+    elif streak_days in (1, 2):
+        extra = f" Good start — you're at {streak_days} day of action. Let's keep it going."
+    else:
+        extra = " Let's just focus on winning today with one meaningful action."
+
+    suggestion = f"{base_suggestion} {extra}"
+
+    return {
+        "status": "stored",
+        "input_text": data.text,
+        "inferred": {
+            "mood": mood,
+            "energy": energy,
+            "focus": focus,
+            "confidence": inferred.get("confidence", 0.0),
+        },
+        "entry": entry,
+        "streak": streak_data,
+        "suggestion": suggestion,
+    }
