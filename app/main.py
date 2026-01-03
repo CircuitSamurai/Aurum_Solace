@@ -298,3 +298,67 @@ def status():
         "streak": streak,
         "counts": counts,
     }
+
+
+@app.get("/actuate", description="Return recommended actions for lights/speaker/robot based on latest state.")
+def actuate():
+    # 1) Get latest mood state (fallbacks if none yet)
+    history = storage.get_mood_history(limit=1)
+    last = history[0] if history else None
+
+    mood = (last.get("mood") if last else "neutral")
+    energy = (last.get("energy") if last else "medium")
+    focus = (last.get("focus") if last else "ok")
+
+    # 2) Streak (optional)
+    streak_info = getattr(storage, "get_action_streak", None)
+    if callable(streak_info):
+        streak = storage.get_action_streak()
+    else:
+        streak = {"streak_days": 0, "last_action_date": None}
+    streak_days = streak.get("streak_days", 0)
+
+    # 3) Baseline defaults
+    lights = {"mode": "warm", "brightness": 45, "effect": "steady"}
+    speaker = {"soundscape": "calm", "volume": 30}
+    robot = {"script": "gentle_checkin", "tone": "calm"}
+
+    # 4) Rules (simple now, ML later)
+    if mood == "low" and energy == "low":
+        lights = {"mode": "warm", "brightness": 25, "effect": "soft_pulse"}
+        speaker = {"soundscape": "comfort", "volume": 25}
+        robot = {"script": "micro_step_support", "tone": "soft"}
+
+    elif mood == "low" and energy in ("medium", "high"):
+        lights = {"mode": "neutral_warm", "brightness": 55, "effect": "steady"}
+        speaker = {"soundscape": "grounding", "volume": 30}
+        robot = {"script": "5_minute_activation", "tone": "steady"}
+
+    elif mood == "neutral" and focus == "drifting":
+        lights = {"mode": "neutral", "brightness": 70, "effect": "steady"}
+        speaker = {"soundscape": "focus", "volume": 35}
+        robot = {"script": "10_minute_focus", "tone": "direct"}
+
+    elif mood == "good" and energy in ("medium", "high"):
+        lights = {"mode": "bright", "brightness": 85, "effect": "steady"}
+        speaker = {"soundscape": "upbeat_focus", "volume": 40}
+        robot = {"script": "deep_work_20", "tone": "confident"}
+
+    # 5) Streak nuance
+    if streak_days >= 3:
+        robot["script"] = f"{robot['script']}_protect_streak"
+
+    return {
+        "based_on": {
+            "timestamp": (last.get("timestamp") if last else None),
+            "mood": mood,
+            "energy": energy,
+            "focus": focus,
+            "streak_days": streak_days,
+        },
+        "commands": {
+            "lights": lights,
+            "speaker": speaker,
+            "robot": robot,
+        },
+    }
