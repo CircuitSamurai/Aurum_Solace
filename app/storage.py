@@ -246,3 +246,40 @@ def get_action_streak() -> Dict[str, Any]:
         "streak_days": streak,
         "last_action_date": last_action_date,
     }
+
+
+
+def get_latest_mood() -> Dict[str, Any] | None:
+    """Return the most recent mood entry or None if no data."""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT timestamp, mood, energy, focus
+        FROM mood_logs
+        ORDER BY timestamp DESC
+        LIMIT 1;
+        """
+    )
+    row = cur.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return {
+        "timestamp": row["timestamp"],
+        "mood": row["mood"],
+        "energy": row["energy"],
+        "focus": row["focus"],
+    }
+
+
+def get_counts() -> Dict[str, int]:
+    """Return counts for mood and action logs (same idea as get_summary, but typed)."""
+    summary = get_summary()
+    return {
+        "mood_entries": int(summary["mood_entries"]),
+        "action_entries": int(summary["action_entries"]),
+    }

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from datetime import datetime
 from . import storage
 
 
@@ -276,4 +277,24 @@ def checkin_text(data: MoodTextIn):
         "entry": entry,
         "streak": streak_data,
         "suggestion": suggestion,
+    }
+
+
+@app.get("/status", description="Server heartbeat + latest state snapshot for devices.")
+def status():
+    latest_mood = storage.get_latest_mood()
+    counts = storage.get_summary()
+
+    streak_info = getattr(storage, "get_action_streak", None)
+    if callable(streak_info):
+        streak = storage.get_action_streak()
+    else:
+        streak = {"streak_days": 0, "last_action_date": None}
+
+    return {
+        "server": "online",
+        "utc_time": datetime.utcnow().isoformat(),
+        "latest_mood": latest_mood,
+        "streak": streak,
+        "counts": counts,
     }
