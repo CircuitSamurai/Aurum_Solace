@@ -349,26 +349,27 @@ def actuate():
 
     # 4) Rules (simple now, ML later)
     if mood == "low" and energy == "low":
-        lights = {
+        lights.update({
             "scene": "ember",
             "color_temp_k": 2200,
             "brightness": 20,
             "effect": "breathe",
             "duration_s": 900,
-        }
-        speaker = {
+        })
+        speaker.update({
             "soundscape": "rain_soft",
             "volume": 22,
             "fade_in_s": 8,
             "duration_s": 600,
-        }
-        robot = {
+        })
+        robot.update({
             "script": "micro_step_support",
             "tone": "soft",
             "line": "We go small. Stand up. Drink water. One minute.",
             "task": "drink_water",
             "timer_s": 60,
-        }
+        })
+
 
     # 5) Streak nuance
     if streak_days >= 3:
@@ -386,6 +387,9 @@ def actuate():
 
 
     return {
+        "version": "0.1.0",
+        "node": "aurum-brain-1",
+
         "based_on": {
             "timestamp": (last.get("timestamp") if last else None),
             "mood": mood,
@@ -399,3 +403,4 @@ def actuate():
             "robot": robot,
         },
     }
+
