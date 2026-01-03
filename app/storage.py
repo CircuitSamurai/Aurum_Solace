@@ -2,6 +2,7 @@ import sqlite3
 from pathlib import Path
 from datetime import datetime, date, timedelta
 from typing import Dict, Any, List
+import json
 
 DB_PATH = Path("aurum.db")
 
@@ -35,6 +36,21 @@ def init_db() -> None:
             timestamp TEXT NOT NULL,
             action TEXT NOT NULL,
             success INTEGER NOT NULL
+        );
+        """
+    )
+    cur.execute(
+    """
+    CREATE TABLE IF NOT EXISTS actuation_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT NOT NULL,
+        mood TEXT NOT NULL,
+        energy TEXT NOT NULL,
+        focus TEXT NOT NULL,
+        streak_days INTEGER NOT NULL,
+        lights_json TEXT NOT NULL,
+        speaker_json TEXT NOT NULL,
+        robot_json TEXT NOT NULL
         );
         """
     )
@@ -283,3 +299,89 @@ def get_counts() -> Dict[str, int]:
         "mood_entries": int(summary["mood_entries"]),
         "action_entries": int(summary["action_entries"]),
     }
+
+def insert_actuation(
+    mood: str,
+    energy: str,
+    focus: str,
+    streak_days: int,
+    lights: Dict[str, Any],
+    speaker: Dict[str, Any],
+    robot: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Store an actuation decision and return the stored record (without DB id)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    ts = datetime.utcnow().isoformat()
+
+    cur.execute(
+        """
+        INSERT INTO actuation_logs (
+            timestamp, mood, energy, focus, streak_days,
+            lights_json, speaker_json, robot_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+        """,
+        (
+            ts,
+            mood,
+            energy,
+            focus,
+            int(streak_days),
+            json.dumps(lights),
+            json.dumps(speaker),
+            json.dumps(robot),
+        ),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "timestamp": ts,
+        "mood": mood,
+        "energy": energy,
+        "focus": focus,
+        "streak_days": int(streak_days),
+        "lights": lights,
+        "speaker": speaker,
+        "robot": robot,
+    }
+
+
+def get_actuation_history(limit: int = 20) -> List[Dict[str, Any]]:
+    """Return recent actuation decisions, newest first."""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT timestamp, mood, energy, focus, streak_days,
+               lights_json, speaker_json, robot_json
+        FROM actuation_logs
+        ORDER BY timestamp DESC
+        LIMIT ?;
+        """,
+        (limit,),
+    )
+
+    rows = cur.fetchall()
+    conn.close()
+
+    history = []
+    for r in rows:
+        history.append(
+            {
+                "timestamp": r["timestamp"],
+                "mood": r["mood"],
+                "energy": r["energy"],
+                "focus": r["focus"],
+                "streak_days": int(r["streak_days"]),
+                "lights": json.loads(r["lights_json"]),
+                "speaker": json.loads(r["speaker_json"]),
+                "robot": json.loads(r["robot_json"]),
+            }
+        )
+
+    return history
+

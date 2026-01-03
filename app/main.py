@@ -158,6 +158,11 @@ def mood_history(limit: int = 20):
 def action_history(limit: int = 20):
     return storage.get_action_history(limit=limit)
 
+@app.get("/history/actuations", description="Recent actuation decisions (newest first)")
+def actuation_history(limit: int = 20):
+    return storage.get_actuation_history(limit=limit)
+
+
 @app.get("/coach", description="Get a suggested next step based on your latest mood check-in.")
 def coach():
     # Get the most recent mood entry from the database
@@ -318,35 +323,67 @@ def actuate():
         streak = {"streak_days": 0, "last_action_date": None}
     streak_days = streak.get("streak_days", 0)
 
-    # 3) Baseline defaults
-    lights = {"mode": "warm", "brightness": 45, "effect": "steady"}
-    speaker = {"soundscape": "calm", "volume": 30}
-    robot = {"script": "gentle_checkin", "tone": "calm"}
+    # 3) Ground State
+    lights = {
+        "scene": "neutral",
+        "color_temp_k": 2700,
+        "brightness": 45,
+        "effect": "steady",
+        "duration_s": 1800,
+    }
+
+    speaker = {
+        "soundscape": "silence",
+        "volume": 20,
+        "fade_in_s": 5,
+        "duration_s": 0,
+    }
+
+    robot = {
+        "script": "idle_presence",
+        "tone": "calm",
+        "line": None,
+        "task": None,
+        "timer_s": None,
+    }
 
     # 4) Rules (simple now, ML later)
     if mood == "low" and energy == "low":
-        lights = {"mode": "warm", "brightness": 25, "effect": "soft_pulse"}
-        speaker = {"soundscape": "comfort", "volume": 25}
-        robot = {"script": "micro_step_support", "tone": "soft"}
-
-    elif mood == "low" and energy in ("medium", "high"):
-        lights = {"mode": "neutral_warm", "brightness": 55, "effect": "steady"}
-        speaker = {"soundscape": "grounding", "volume": 30}
-        robot = {"script": "5_minute_activation", "tone": "steady"}
-
-    elif mood == "neutral" and focus == "drifting":
-        lights = {"mode": "neutral", "brightness": 70, "effect": "steady"}
-        speaker = {"soundscape": "focus", "volume": 35}
-        robot = {"script": "10_minute_focus", "tone": "direct"}
-
-    elif mood == "good" and energy in ("medium", "high"):
-        lights = {"mode": "bright", "brightness": 85, "effect": "steady"}
-        speaker = {"soundscape": "upbeat_focus", "volume": 40}
-        robot = {"script": "deep_work_20", "tone": "confident"}
+        lights = {
+            "scene": "ember",
+            "color_temp_k": 2200,
+            "brightness": 20,
+            "effect": "breathe",
+            "duration_s": 900,
+        }
+        speaker = {
+            "soundscape": "rain_soft",
+            "volume": 22,
+            "fade_in_s": 8,
+            "duration_s": 600,
+        }
+        robot = {
+            "script": "micro_step_support",
+            "tone": "soft",
+            "line": "We go small. Stand up. Drink water. One minute.",
+            "task": "drink_water",
+            "timer_s": 60,
+        }
 
     # 5) Streak nuance
     if streak_days >= 3:
         robot["script"] = f"{robot['script']}_protect_streak"
+
+    storage.insert_actuation(
+        mood=mood,
+        energy=energy,
+        focus=focus,
+        streak_days=streak_days,
+        lights=lights,
+        speaker=speaker,
+        robot=robot,
+    )
+
 
     return {
         "based_on": {
