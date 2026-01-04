@@ -18,31 +18,31 @@ Aurum Solace is designed to operate locally, privately, and continuously—learn
 What It Does (Current)
 
 Tracks mood, energy, and focus through manual and inferred inputs
-Infers mental state from free-form text
-Generates coaching suggestions based on recent state and behavior
+Infers mental state from free-form text,
+Generates coaching suggestions based on recent state and behavior,
 Computes action streaks to reinforce consistency
 
 Produces actuation commands for:
-Smart lighting
-Audio/soundscapes
-A future robot companion
-Learns from user feedback to adjust behavior over time
+Smart lighting,
+Audio/soundscapes,
+A future robot companion,
+Learns from user feedback to adjust behavior over time,
 Runs fully offline using a local SQLite database
 
 
 Planned Hardware Integration
 
-🤖 Robot Companion (Planned)
-Autonomous navigation and obstacle avoidance
-Screen-based face (tablet or embedded display)
-Facial expression and speech tone analysis
-Context-aware verbal and behavioral responses
+🤖 Robot Companion (Planned) -
+Autonomous navigation and obstacle avoidance,
+Screen-based face (tablet or embedded display),
+Facial expression and speech tone analysis,
+Context-aware verbal and behavioral responses,
 Designed to reinforce discipline through presence, not nagging
 
 💡 Adaptive LED Lighting (Planned)
-Full-room LED strip lighting instead of lamps
-Mood-aware color temperature and brightness
-Environmental regulation tied to mental state
+Full-room LED strip lighting instead of lamps,
+Mood-aware color temperature and brightness,
+Environmental regulation tied to mental state,
 Camera-assisted emotion detection (optional, local-only)
 
 
@@ -54,7 +54,7 @@ All inference and feedback mechanisms are exploratory and designed for research,
 Status
 
 This project is actively evolving. Current focus areas include:
-Refining actuation logic
-Expanding learning from feedback
-Preparing interfaces for physical devices
+Refining actuation logic,
+Expanding learning from feedback,
+Preparing interfaces for physical devices,
 Transitioning inference from rules to local models
