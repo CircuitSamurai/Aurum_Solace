@@ -47,6 +47,7 @@ Camera-assisted emotion detection (optional, local-only)
 
 
 Tech Stack
+
 Backend
 Python
 FastAPI
