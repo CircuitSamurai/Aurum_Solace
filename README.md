@@ -63,7 +63,6 @@ Mini PC deployment (GMKtec)
 Systemd service for auto-start
 Git-based version control
 
-
 Project Structure
 Aurum_Solace/
 ├── app/
