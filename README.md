@@ -4,12 +4,14 @@ Aurum Solace is a local-first, adaptive AI system designed to help regulate mood
 The project combines backend intelligence, learning loops, and planned physical devices—including a mobile robot companion and adaptive LED lighting—to create a system that responds to a person’s mental state in real time. The long-term goal is a private, continuously learning assistant that supports stability and forward momentum through subtle, consistent interventions rather than notifications or reminders.
 Aurum Solace is built to run locally, respect privacy, and scale from software-only environments to real-world hardware deployments. 🧠💡🤖
 
+
 Why I Built This
 
 I built Aurum Solace because motivation is unreliable, and discipline without feedback eventually breaks.
 Most systems tell you what you should do, but they disappear when your energy drops, your focus slips, or your mood turns against you. They don’t stay present when consistency matters most.
 This project is about building something that doesn’t flinch when you’re tired, distracted, or low. A system that quietly observes patterns, adapts to reality, and pushes back with the smallest effective action when things start to slide. No hype. No noise. Just consistent pressure in the right direction.
 Aurum Solace is designed to operate locally, privately, and continuously—learning from behavior, responding through environment and interaction, and reinforcing progress over time. It’s not about comfort. It’s about stability, awareness, and forward movement, even on the days when willpower is gone.
+
 
 What It Does (Current)
 
@@ -25,6 +27,7 @@ A future robot companion
 Learns from user feedback to adjust behavior over time
 Runs fully offline using a local SQLite database
 
+
 Planned Hardware Integration
 
 🤖 Robot Companion (Planned)
@@ -39,6 +42,7 @@ Full-room LED strip lighting instead of lamps
 Mood-aware color temperature and brightness
 Environmental regulation tied to mental state
 Camera-assisted emotion detection (optional, local-only)
+
 
 Tech Stack
 Backend
@@ -56,6 +60,7 @@ Mini PC deployment (GMKtec)
 Systemd service for auto-start
 Git-based version control
 
+
 Project Structure
 Aurum_Solace/
 ├── app/
@@ -68,11 +73,14 @@ Aurum_Solace/
 ├── README.md
 └── DEPLOY_NOTES.md
 
+
 Disclaimer
 Aurum Solace is an experimental personal project and not a medical or mental health device. It is not intended to diagnose, treat, or replace professional care.
 All inference and feedback mechanisms are exploratory and designed for research, learning, and personal experimentation only.
 
+
 Status
+
 This project is actively evolving. Current focus areas include:
 Refining actuation logic
 Expanding learning from feedback
