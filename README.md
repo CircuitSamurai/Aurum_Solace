@@ -5,6 +5,8 @@ The project combines backend intelligence, learning loops, and planned physical 
 Aurum Solace is built to run locally, respect privacy, and scale from software-only environments to real-world hardware deployments. 🧠💡🤖
 
 
+
+
 Why I Built This
 
 I built Aurum Solace because motivation is unreliable, and discipline without feedback eventually breaks.
