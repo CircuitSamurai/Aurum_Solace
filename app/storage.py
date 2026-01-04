@@ -1,7 +1,7 @@
 import sqlite3
 from pathlib import Path
 from datetime import datetime, date, timedelta
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import json
 
 DB_PATH = Path("aurum.db")
@@ -39,6 +39,7 @@ def init_db() -> None:
         );
         """
     )
+
     cur.execute(
     """
     CREATE TABLE IF NOT EXISTS actuation_logs (
@@ -55,6 +56,17 @@ def init_db() -> None:
         """
     )
 
+    cur.execute(
+    """
+    CREATE TABLE IF NOT EXISTS feedback_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TEXT NOT NULL,
+        actuation_timestamp TEXT,
+        helped INTEGER NOT NULL,
+        note TEXT
+    );
+    """
+)
     conn.commit()
     conn.close()
 
@@ -188,6 +200,87 @@ def get_action_history(limit: int = 20) -> List[Dict[str, Any]]:
 
     return history
 
+def get_latest_actuation_timestamp() -> str | None:
+    """Return the most recent actuation timestamp or None."""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT timestamp
+        FROM actuation_logs
+        ORDER BY timestamp DESC
+        LIMIT 1;
+        """
+    )
+    row = cur.fetchone()
+    conn.close()
+
+    if row is None:
+        return None
+
+    return row["timestamp"]
+
+
+def insert_feedback(helped: bool, note: str | None = None) -> Dict[str, Any]:
+    """Store feedback and attach it to the latest actuation."""
+    conn = get_connection()
+    cur = conn.cursor()
+    ts = datetime.utcnow().isoformat()
+
+    act_ts = get_latest_actuation_timestamp()
+
+    cur.execute(
+        """
+        INSERT INTO feedback_logs (timestamp, actuation_timestamp, helped, note)
+        VALUES (?, ?, ?, ?);
+        """,
+        (ts, act_ts, int(helped), note),
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {
+        "timestamp": ts,
+        "actuation_timestamp": act_ts,
+        "helped": helped,
+        "note": note,
+    }
+
+
+def get_feedback_history(limit: int = 20) -> List[Dict[str, Any]]:
+    """Return recent feedback entries, newest first."""
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        SELECT timestamp, actuation_timestamp, helped, note
+        FROM feedback_logs
+        ORDER BY timestamp DESC
+        LIMIT ?;
+        """,
+        (limit,),
+    )
+
+    rows = cur.fetchall()
+    conn.close()
+
+    history = []
+    for r in rows:
+        history.append(
+            {
+                "timestamp": r["timestamp"],
+                "actuation_timestamp": r["actuation_timestamp"],
+                "helped": bool(r["helped"]),
+                "note": r["note"],
+            }
+        )
+
+    return history
+
+
 def get_action_streak() -> Dict[str, Any]:
     """
     Calculate the current streak of days with at least one successful action.
@@ -308,6 +401,7 @@ def insert_actuation(
     lights: Dict[str, Any],
     speaker: Dict[str, Any],
     robot: Dict[str, Any],
+    requested_device: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Store an actuation decision and return the stored record (without DB id)."""
     conn = get_connection()

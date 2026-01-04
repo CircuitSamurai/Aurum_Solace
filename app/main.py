@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from datetime import datetime
 from . import storage
+from typing import Optional
 
 
 app = FastAPI(title="Aurum_Solace Server")
@@ -31,6 +32,12 @@ class ActionLog(BaseModel):
 class MoodTextIn(BaseModel):
     text: str # free-form text about how the user feels
 
+
+
+
+class FeedbackIn(BaseModel):
+    helped: bool
+    note: Optional[str] = None
 
 
 
@@ -306,7 +313,7 @@ def status():
 
 
 @app.get("/actuate", description="Return recommended actions for lights/speaker/robot based on latest state.")
-def actuate():
+def actuate(device: Optional[str] = None):
     # 1) Get latest mood state (fallbacks if none yet)
     history = storage.get_mood_history(limit=1)
     last = history[0] if history else None
@@ -383,13 +390,13 @@ def actuate():
         lights=lights,
         speaker=speaker,
         robot=robot,
+        requested_device=device,
     )
 
 
-    return {
+    response = {
         "version": "0.1.0",
         "node": "aurum-brain-1",
-
         "based_on": {
             "timestamp": (last.get("timestamp") if last else None),
             "mood": mood,
@@ -404,3 +411,22 @@ def actuate():
         },
     }
 
+    if device:
+        d = device.lower().strip()
+        if d in response["commands"]:
+            response["commands"] = {d: response["commands"][d]}
+        else:
+            return {
+                "error": f"Unknown device '{device}'. Use lights, speaker, or robot."
+            }
+
+    return response
+
+@app.post("/feedback", description="Log whether the last actuation helped.")
+def feedback(data: FeedbackIn):
+    return storage.insert_feedback(helped=data.helped, note=data.note)
+
+
+@app.get("/history/feedback", description="Recent feedback (newest first).")
+def feedback_history(limit: int = 20):
+    return storage.get_feedback_history(limit=limit)
