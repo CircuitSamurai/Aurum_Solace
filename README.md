@@ -46,36 +46,6 @@ Environmental regulation tied to mental state
 Camera-assisted emotion detection (optional, local-only)
 
 
-Tech Stack
-
-Backend
-Python
-FastAPI
-SQLite
-Pydantic
-AI / Logic
-Rule-based inference (current)
-Planned local LLM integration
-Feedback-driven policy adjustment system
-Infrastructure
-Linux (Ubuntu)
-Mini PC deployment (GMKtec)
-Systemd service for auto-start
-Git-based version control
-
-Project Structure
-Aurum_Solace/
-├── app/
-│   ├── main.py          # FastAPI application and endpoints
-│   └── storage.py       # SQLite persistence and learning logic
-├── scripts/
-│   └── fake_device.py   # Device testing script
-├── aurum.db             # Local SQLite database (gitignored)
-├── requirements.txt
-├── README.md
-└── DEPLOY_NOTES.md
-
-
 Disclaimer
 Aurum Solace is an experimental personal project and not a medical or mental health device. It is not intended to diagnose, treat, or replace professional care.
 All inference and feedback mechanisms are exploratory and designed for research, learning, and personal experimentation only.
